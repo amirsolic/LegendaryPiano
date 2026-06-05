@@ -4,7 +4,9 @@
   "version": "0.1.0",
   "identifier": "com.amirsolic.legendary_piano",
   "build": {
-    "frontendDist": "../src"
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://localhost:5173",
+    "frontendDist": "../dist"
   },
   "app": {
     "withGlobalTauri": true,

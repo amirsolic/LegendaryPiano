@@ -3,7 +3,22 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 import hdrUrl from './assets/textuers/brown_photostudio_01_2k.hdr'
-import { texture } from 'three/tsl';
+import { objectGroup, texture } from 'three/tsl';
+const soundFiles = import.meta.glob('./assets/sfx/*.mp3', {eager: true});
+
+
+const soundMap = {};
+if (Object.keys(soundFiles).length === 0){
+  console.error("vit natonest hich fily  to masir peyda koone")
+}
+for (const path in soundFiles) {
+const fileNmae = path.split('/').pop().replace('.mp3', '');
+const noteName = fileNmae.replace('s', '#')
+soundMap[noteName] = soundFiles[path].default;
+}
+
+console.log("soud maps is specifice: " , Object.keys(soundMap));
+
 
 // creat scene and camera and renderer
 
@@ -64,9 +79,13 @@ loader.load(
 
 
 function playNote(key){
+
+  const note = key.name;
+
   const originalcolor = key.material.color.getHex();
   key.material.color.setHex(0xff0000);
 
+  playSound(note);
 
   setTimeout(() => {
     key.material.color.setHex(originalcolor);
@@ -116,5 +135,19 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
-
 animate();
+
+
+
+function playSound(note){
+  const url = soundMap[note];
+
+if(!url){
+  console.warn("sound not found", note);
+  return;
+}
+
+const audio = new Audio(url);
+audio.currentTime = 0;
+audio.play();
+}

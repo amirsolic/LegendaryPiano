@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  assetsInclude: ['**/*.glb', '**/*.hdr', '**/*.exr'],
+  assetsInclude: ['**/*.glb', '**/*.hdr', '**/*.mp3'],
   
   server: {
     port: 5173,

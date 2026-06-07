@@ -31,6 +31,9 @@ rgbeLoader.load(hdrUrl, (texture) => {
 
 const loader = new GLTFLoader();
 
+
+let pianoKeys = [];  
+
 loader.load(
   painoUrl,
   (gltf) => {
@@ -42,8 +45,58 @@ loader.load(
     model.position.y += (model.position.y - center.y);
     model.position.z += (model.position.z - center.z);
     scene.add(model);
+
+    model.traverse((node) => {
+        if (node.isMesh){
+
+        const isNote = /^[A-G]/.test(node.name);
+
+        if(isNote){
+          node.material = node.material.clone();
+          pianoKeys.push(node);
+          console.log("obj name:", node.name);
+        }else{
+          node.raycast= () => {};
+        }
+        }
+    });
   });
 
+
+function playNote(key){
+  const originalcolor = key.material.color.getHex();
+  key.material.color.setHex(0xff0000);
+
+
+  setTimeout(() => {
+    key.material.color.setHex(originalcolor);
+  },200);
+}
+
+
+
+
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+
+window.addEventListener('mousedown', (event) => {
+  const rect = renderer.domElement.getBoundingClientRect();
+
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+
+  const intersects = raycaster.intersectObjects(pianoKeys, false);
+   if (intersects.length > 0) {
+    const selectedKey = intersects[0].object;
+    console.log("you are click this:", selectedKey.name);
+
+    playNote(selectedKey);
+   }else{
+    console.log("out of cloviyes");
+   }
+});
 
 
 function animate(){

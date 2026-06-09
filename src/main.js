@@ -9,7 +9,6 @@ const soundFiles = import.meta.glob('./assets/sfx/*.mp3', {eager: true});
 
 const soundMap = {};
 if (Object.keys(soundFiles).length === 0){
-  console.error("vit natonest hich fily  to masir peyda koone")
 }
 for (const path in soundFiles) {
 const fileNmae = path.split('/').pop().replace('.mp3', '');
@@ -17,7 +16,15 @@ const noteName = fileNmae.replace('s', '#')
 soundMap[noteName] = soundFiles[path].default;
 }
 
-console.log("soud maps is specifice: " , Object.keys(soundMap));
+
+const audioBuffers = {};
+
+for (const note in soundMap) {
+const audio = new Audio(soundMap[note]);
+audio.preload = 'auto';
+audio.load();
+audioBuffers[note] = audio;
+}
 
 
 // creat scene and camera and renderer
@@ -40,7 +47,6 @@ rgbeLoader.load(hdrUrl, (texture) => {
   texture.mapping = THREE.EquirectangularReflectionMapping;
 
   scene.environment = texture;
-  console.log('HDRI loaded!');
 })
 
 
@@ -49,9 +55,7 @@ const loader = new GLTFLoader();
 
 let pianoKeys = [];  
 
-loader.load(
-  painoUrl,
-  (gltf) => {
+loader.load(painoUrl, (gltf) => {
     const model = gltf.scene;
     const box = new THREE.Box3().setFromObject(model);
     const center = box.getCenter(new THREE.Vector3());
@@ -60,7 +64,7 @@ loader.load(
     model.position.y += (model.position.y - center.y);
     model.position.z += (model.position.z - center.z);
     scene.add(model);
-
+    document.getElementById("loading").style.display = "none";
     model.traverse((node) => {
         if (node.isMesh){
 
@@ -68,8 +72,8 @@ loader.load(
 
         if(isNote){
           node.material = node.material.clone();
+          node.userData.target = 0;
           pianoKeys.push(node);
-          console.log("obj name:", node.name);
         }
         }
     });
@@ -79,14 +83,9 @@ loader.load(
 function playNote(key){
 
   const note = key.name;
-
-
-   key.rotation.x = 0.1;
+  key.userData.target = 0.12;
   playSound(note);
 
-  setTimeout(() => {
-    key.rotation.x = 0;
-  },160);
 }
 
 
@@ -107,17 +106,21 @@ window.addEventListener('mousedown', (event) => {
   const intersects = raycaster.intersectObjects(pianoKeys, false);
    if (intersects.length > 0) {
     const selectedKey = intersects[0].object;
-    console.log("you are click this:", selectedKey.name);
 
     playNote(selectedKey);
-   }else{
-    console.log("out of cloviyes");
    }
 });
 
 
 function animate(){
   requestAnimationFrame(animate);
+
+  pianoKeys.forEach((key) => {
+  key.rotation.x += (key.userData.target - key.rotation.x) * 0.4;
+
+  key.userData.target *= 0.6;
+  });
+
   renderer.render(scene, camera);
 }
 
@@ -137,15 +140,12 @@ animate();
 
 
 
+
 function playSound(note){
-  const url = soundMap[note];
+const baseAoudio = audioBuffers[note];
+if (!baseAoudio) return;
 
-if(!url){
-  console.warn("sound not found", note);
-  return;
-}
-
-const audio = new Audio(url);
+const audio = baseAoudio.cloneNode();
 audio.currentTime = 0;
 audio.play();
 }

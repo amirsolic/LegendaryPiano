@@ -26,7 +26,7 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x111111);
 
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1);
-camera.position.set(0, 7, 8);
+camera.position.set(0, 5, 10);
 camera.lookAt(0, 0, 0);
 
 const renderer = new THREE.WebGLRenderer({antialias: true});
@@ -64,14 +64,12 @@ loader.load(
     model.traverse((node) => {
         if (node.isMesh){
 
-        const isNote = /^[A-G]/.test(node.name);
+        const isNote = /^[A-G](#|s)?\d+$/.test(node.name) && !/1$/.test(node.name);
 
         if(isNote){
           node.material = node.material.clone();
           pianoKeys.push(node);
           console.log("obj name:", node.name);
-        }else{
-          node.raycast= () => {};
         }
         }
     });
@@ -82,14 +80,13 @@ function playNote(key){
 
   const note = key.name;
 
-  const originalcolor = key.material.color.getHex();
-  key.material.color.setHex(0xff0000);
 
+   key.rotation.x = 0.1;
   playSound(note);
 
   setTimeout(() => {
-    key.material.color.setHex(originalcolor);
-  },200);
+    key.rotation.x = 0;
+  },160);
 }
 
 
@@ -102,8 +99,9 @@ const mouse = new THREE.Vector2();
 window.addEventListener('mousedown', (event) => {
   const rect = renderer.domElement.getBoundingClientRect();
 
-  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
   raycaster.setFromCamera(mouse, camera);
 
   const intersects = raycaster.intersectObjects(pianoKeys, false);
